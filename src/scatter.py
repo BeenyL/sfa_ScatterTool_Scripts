@@ -94,7 +94,15 @@ class ScatterUI(QtWidgets.QDialog):
             for vert in vertList:
                 vertexPos = cmds.xform(vert, q=True, ws=True, t=True)
                 new_instance = cmds.instance(object_to_instance)
-                cmds.move(vertexPos[0], vertexPos[1], vertexPos[2], new_instance)
+
+                cmds.move(vertexPos[0], vertexPos[1], vertexPos[2],
+                          new_instance)
+
+                cmds.rotate(vertexPos[0], vertexPos[1], vertexPos[2],
+                            new_instance, relative=True, objectSpace=True)
+
+                cmds.scale(vertexPos[0], vertexPos[1], vertexPos[2],
+                          new_instance, relative=True)
 
     @QtCore.Slot()
     def update_div(self):
@@ -130,7 +138,6 @@ class ScatterUI(QtWidgets.QDialog):
         self.shape_cmb.setFixedWidth(100)
         self.shape_cmb.addItems(['Cube', 'Sphere', 'Cylinder', 'Cone'])
         self.shape_btn = QtWidgets.QPushButton("Create Shape")
-        self.update_div_btn = QtWidgets.QPushButton("Update Division")
 
         self.sub_ax_sbx = QtWidgets.QSpinBox()
         self.sub_ax_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
@@ -153,10 +160,10 @@ class ScatterUI(QtWidgets.QDialog):
         self.sub_hgt.setFixedWidth(100)
         self.sub_bas = QtWidgets.QLabel("Sub Base")
         self.sub_bas.setFixedWidth(100)
+
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.shape_cmb, 0, 0)
         layout.addWidget(self.shape_btn, 0, 1)
-        layout.addWidget(self.update_div_btn, 0, 2)
         layout.addWidget(self.sub_ax, 0, 3)
         layout.addWidget(self.sub_ax_sbx, 0, 4)
         layout.addWidget(self.sub_hgt, 0, 5)
