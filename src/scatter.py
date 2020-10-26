@@ -1,5 +1,6 @@
 import maya.OpenMayaUI as omui
 import maya.cmds as cmds
+import maya.OpenMaya as om
 import random
 from PySide2 import QtWidgets, QtGui, QtCore
 from shiboken2 import wrapInstance
@@ -25,41 +26,78 @@ class ScatterUI(QtWidgets.QDialog):
         self.setMaximumHeight(400)
         self.setWindowFlags(self.windowFlags() ^
                             QtCore.Qt.WindowContextHelpButtonHint)
-
+        self.defaultSubDiv = DefaultSubDiv()
         self.create_ui()
         self.create_connections()
+
 
     def create_ui(self):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: Bold 20px")
         self.create_obj_lay = self.create_obj_layout_ui()
-        self.sel_cnl_lay = self.sel_cnl_layout_ui()
+        self.sct_cnl_lay = self.sct_cnl_layout_ui()
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
         self.main_lay.addLayout(self.create_obj_lay)
         self.main_lay.addStretch()
-        self.main_lay.addLayout(self.sel_cnl_lay)
+        self.main_lay.addLayout(self.sct_cnl_lay)
         self.setLayout(self.main_lay)
 
     def create_connections(self):
+        self.scatter_btn.clicked.connect(self.scatter_object)
         self.cancel_btn.clicked.connect(self.cancel)
-        self.shape_btn.clicked.connect(self.createShape)
+        self.shape_btn.clicked.connect(self.create_shape)
+        self.update_div_btn.clicked.connect(self.update_div)
 
     @QtCore.Slot()
-    def createShape(self):
+    def create_shape(self):
+        self.defaultSubDiv.cur_sub_ax = self.sub_ax_sbx.value()
+        self.defaultSubDiv.cur_sub_hgt = self.sub_hgt.sbx.value()
         if self.shape_cmb.currentText() == "Cube":
-            cmds.polyCube(name="Cube")
+            cmds.polyCube(name="Cube", sa=self.defaultSubDiv.cur_sub_ax,
+                          sh=self.defaultSubDiv.cur_sub_hgt)
         if self.shape_cmb.currentText() == "Sphere":
-            cmds.polySphere(name="Sphere")
+            cmds.polySphere(name="Sphere", sa=self.defaultSubDiv.cur_sub_ax,
+                            sh=self.defaultSubDiv.cur_sub_hgt)
         if self.shape_cmb.currentText() == "Cylinder":
-            cmds.polyCylinder(name="Cylinder")
+            cmds.polyCylinder(name="Cylinder", sa=self.defaultSubDiv.cur_sub_ax
+                              , sh=self.defaultSubDiv.cur_sub_hgt)
         if self.shape_cmb.currentText() == "Cone":
-            cmds.polyCone(name="Cone")
+            cmds.polyCone(name="Cone", sa=self.defaultSubDiv.cur_sub_ax,
+                          sh=self.defaultSubDiv.cur_sub_hgt)
 
     @QtCore.Slot()
-    def selectObject(self):
-        """Select an Object"""
-        cmds.select(self.shape_cmb.currentText())
+    def scatter_object(self):
+        """scatter an Object"""
+        vertList = cmds.ls(selection=True, fl=True)
+        scatter_grp = cmds.group(n='scatter_grp')
+        object_to_instance = vertList[0]
+        if cmds.objectType(object_to_instance) == 'transform':
+
+            for vert in vertList:
+                vertexPos = cmds.xform(vert, q=True, ws=True, t=True)
+                new_instance = cmds.instance(object_to_instance)
+                cmds.move(vertexPos[0], vertexPos[1], vertexPos[2], new_instance)
+
+    @QtCore.Slot()
+    def update_div(self):
+        """update subdivision"""
+
+        if self.shape_cmb.currentText() == "Cube":
+            self.defaultSubDiv.cur_sub_ax = self.defaultSubDiv.cb_sub_ax
+            self.defaultSubDiv.cur_sub_hgt = self.defaultSubDiv.cb_sub_hgt
+        if self.shape_cmb.currentText() == "Sphere":
+            self.defaultSubDiv.cur_sub_ax = self.defaultSubDiv.s_sub_ax
+            self.defaultSubDiv.cur_sub_hgt = self.defaultSubDiv.s_sub_hgt
+        if self.shape_cmb.currentText() == "Cylinder":
+            self.defaultSubDiv.cur_sub_ax = self.defaultSubDiv.cyl_sub_ax
+            self.defaultSubDiv.cur_sub_hgt = self.defaultSubDiv.cyl_sub_hgt
+        if self.shape_cmb.currentText() == "Cone":
+            self.defaultSubDiv.cur_sub_ax = self.defaultSubDiv.cn_sub_ax
+            self.defaultSubDiv.cur_sub_hgt = self.defaultSubDiv.cn_sub_hgt
+
+        self.sub_ax_sbx.setValue(self.defaultSubDiv.cur_sub_ax)
+        self.sub_hgt_sbx.setValue(self.defaultSubDiv.cur_sub_hgt)
 
     @QtCore.Slot()
     def cancel(self):
@@ -71,56 +109,48 @@ class ScatterUI(QtWidgets.QDialog):
         self.shape_cmb.setFixedWidth(100)
         self.shape_cmb.addItems(['Cube', 'Sphere', 'Cylinder', 'Cone'])
         self.shape_btn = QtWidgets.QPushButton("Create Shape")
+        self.update_div_btn = QtWidgets.QPushButton("Update Division")
+        self.sub_ax_sbx = QtWidgets.QSpinBox()
+        self.sub_ax_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
+        self.sub_ax_sbx.setFixedWidth(50)
+        self.sub_ax_sbx.setValue(self.defaultSubDiv.cur_sub_ax)
+        self.sub_hgt_sbx = QtWidgets.QSpinBox()
+        self.sub_hgt_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
+        self.sub_hgt_sbx.setFixedWidth(50)
+        self.sub_hgt_sbx.setValue(self.defaultSubDiv.cur_sub_hgt)
+        self.sub_ax = QtWidgets.QLabel("Sub Axis")
+        self.sub_ax.setFixedWidth(100)
+        self.sub_hgt = QtWidgets.QLabel("Sub Height")
+        self.sub_hgt.setFixedWidth(100)
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.shape_cmb, 0, 0)
         layout.addWidget(self.shape_btn, 0, 1)
+        layout.addWidget(self.update_div_btn, 0, 2)
+        layout.addWidget(self.sub_ax, 0, 3)
+        layout.addWidget(self.sub_ax_sbx, 0, 4)
+        layout.addWidget(self.sub_hgt, 0, 5)
+        layout.addWidget(self.sub_hgt_sbx, 0, 6)
         return layout
 
-    def sel_cnl_layout_ui(self):
-        self.select_btn = QtWidgets.QPushButton("Select Object")
+    def sct_cnl_layout_ui(self):
+        self.scatter_btn = QtWidgets.QPushButton("Scatter Object")
         self.cancel_btn = QtWidgets.QPushButton("Cancel")
         layout = QtWidgets.QGridLayout()
-        layout.addWidget(self.select_btn, 0, 0)
+        layout.addWidget(self.scatter_btn, 0, 0)
         layout.addWidget(self.cancel_btn, 0, 1)
         return layout
 
 
-class RandomScatter(object):
-    random.seed(1234)
+class DefaultSubDiv(object):
 
-    '''cubeList = cmds.ls( 'myCube*' )
-    if len(cubeList) > 0:
-        cmds.delete(cubeList)'''
-
-    result = cmds.polyCube(w=1, h=1, d=1, name='myCube#')
-
-    transformName = result[0]
-
-    instanceGroupName = cmds.group(empty=True,
-                                   name=transformName + '_instance_grp#')
-
-    for i in range(0, 50):
-        instanceResult = cmds.instance(transformName,
-                                       name=transformName + '_instance#')
-
-        cmds.parent(instanceResult, instanceGroupName)
-
-        x = random.uniform(-10, 10)
-        y = random.uniform(0, 20)
-        z = random.uniform(-10, 10)
-
-        cmds.move(x, y, z, instanceResult)
-
-        xRot = random.uniform(0, 360)
-        yRot = random.uniform(0, 360)
-        zRot = random.uniform(0, 360)
-
-        cmds.rotate(xRot, yRot, zRot, instanceResult)
-
-        scalingFactor = random.uniform(0.3, 1.5)
-
-        cmds.scale(scalingFactor, scalingFactor, scalingFactor, instanceResult)
-
-    cmds.hide(transformName)
-
-    cmds.xform(instanceGroupName, centerPivots=True)
+    def __init__(self):
+        self.cur_sub_ax = 0
+        self.cur_sub_hgt = 0
+        self.cb_sub_ax = 4
+        self.cb_sub_hgt = 4
+        self.s_sub_ax = 8
+        self.s_sub_hgt = 8
+        self.cyl_sub_ax = 8
+        self.cyl_sub_hgt = 4
+        self.cn_sub_ax = 8
+        self.cn_sub_hgt = 3
