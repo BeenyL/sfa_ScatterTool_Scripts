@@ -47,6 +47,9 @@ class ScatterUI(QtWidgets.QDialog):
         self.rnd_rotation_lay = self.rnd_rotation_ui()
         self.rnd_scale_lay = self.rnd_scale_ui()
         self.create_den_sct_lay = self.create_density_scatter_ui()
+        self.ui_main_layout()
+
+    def ui_main_layout(self):
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
         self.main_lay.addWidget(self.create_poly)
@@ -63,21 +66,22 @@ class ScatterUI(QtWidgets.QDialog):
     def create_connections(self):
         self.scatter_btn.clicked.connect(self.scatter_object)
         self.cancel_btn.clicked.connect(self.cancel)
+        self.create_shape_connections()
+        self.rot_btn.clicked.connect(self.scatter_rotate_object)
+        self.scatter_rot_connections()
+        # self.scl_btn.clicked.connect(self.scatter_scale_object)
+        self.scatter_scl_connections()
+
+        self.scatter_density_sbx.valueChanged.connect(self.update_sct_den_val)
+
+    def create_shape_connections(self):
         self.shape_btn.clicked.connect(self.create_shape)
         self.sub_ax_sbx.valueChanged.connect(self.update_sub_val_ax)
         self.sub_hgt_sbx.valueChanged.connect(self.update_sub_val_hgt)
         self.sub_bas_sbx.valueChanged.connect(self.update_sub_val_bas)
         self.shape_cmb.currentIndexChanged.connect(self.update_div)
 
-        self.rot_btn.clicked.connect(self.scatter_rotate_object)
-        self.min_x_rot_sbx.valueChanged.connect(self.update_rot_min_val_x)
-        self.min_y_rot_sbx.valueChanged.connect(self.update_rot_min_val_y)
-        self.min_z_rot_sbx.valueChanged.connect(self.update_rot_min_val_z)
-        self.max_x_rot_sbx.valueChanged.connect(self.update_rot_max_val_x)
-        self.max_y_rot_sbx.valueChanged.connect(self.update_rot_max_val_y)
-        self.max_z_rot_sbx.valueChanged.connect(self.update_rot_max_val_z)
-
-        self.scl_btn.clicked.connect(self.scatter_scale_object)
+    def scatter_scl_connections(self):
         self.min_x_scl_sbx.valueChanged.connect(self.update_scl_min_val_x)
         self.min_y_scl_sbx.valueChanged.connect(self.update_scl_min_val_y)
         self.min_z_scl_sbx.valueChanged.connect(self.update_scl_min_val_z)
@@ -85,7 +89,13 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_y_scl_sbx.valueChanged.connect(self.update_scl_max_val_y)
         self.max_z_scl_sbx.valueChanged.connect(self.update_scl_max_val_z)
 
-        self.scatter_density_sbx.valueChanged.connect(self.update_sct_den_val)
+    def scatter_rot_connections(self):
+        self.min_x_rot_sbx.valueChanged.connect(self.update_rot_min_val_x)
+        self.min_y_rot_sbx.valueChanged.connect(self.update_rot_min_val_y)
+        self.min_z_rot_sbx.valueChanged.connect(self.update_rot_min_val_z)
+        self.max_x_rot_sbx.valueChanged.connect(self.update_rot_max_val_x)
+        self.max_y_rot_sbx.valueChanged.connect(self.update_rot_max_val_y)
+        self.max_z_rot_sbx.valueChanged.connect(self.update_rot_max_val_z)
 
     def update_sub_val_ax(self):
         self.defaultSubDiv.cur_sub_ax = self.sub_ax_sbx.value()
@@ -165,11 +175,13 @@ class ScatterUI(QtWidgets.QDialog):
         vert_list = cmds.ls(selection=True, fl=True)
         scatter_grp = cmds.group(n='scatter_grp')
         object_to_instance = vert_list[0]
+        target_object = vert_list[1]
         if cmds.objectType(object_to_instance) == 'transform':
-            sct_den = random.sample(vert_list, len(vert_list) *
-                                    self.defaultDen.def_density)
-            for sct_den in vert_list:
-                vertex_pos = cmds.xform(sct_den, q=True, ws=True, t=True)
+            """ sct_den = random.sample(vert_list, len(vert_list) *
+                                   self.defaultDen.def_density) """
+            for vert in vert_list:
+
+                vertex_pos = cmds.xform(vert, q=True, ws=True, t=True)
                 new_instance = cmds.instance(object_to_instance)
 
                 cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
@@ -186,6 +198,10 @@ class ScatterUI(QtWidgets.QDialog):
                             rand_rot_z,
                             new_instance, relative=True, objectSpace=True)
 
+                cmds.aimConstraint(target_object, new_instance,
+                                   aim=[0, 1, 0],
+                                   worldUpType="vector")
+
                 rand_scl_x = random.uniform(self.defaultScl.min_scl_x,
                                             self.defaultScl.max_scl_x)
                 rand_scl_y = random.uniform(self.defaultScl.min_scl_y,
@@ -196,6 +212,8 @@ class ScatterUI(QtWidgets.QDialog):
                            rand_scl_y,
                            rand_scl_z,
                            new_instance, relative=True)
+
+        cmds.delete(vert_list[0])
 
     @QtCore.Slot()
     def scatter_rotate_object(self, new_instance):
