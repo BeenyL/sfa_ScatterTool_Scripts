@@ -457,15 +457,19 @@ class Scatter(object):
         self.cur_sub_ax = 1
         self.cur_sub_hgt = 1
         self.cur_sub_bas = 1
+
         self.cb_sub_ax = 1
         self.cb_sub_hgt = 1
         self.cb_sub_bas = 1
+
         self.s_sub_ax = 8
         self.s_sub_hgt = 8
         self.s_sub_bas = 0
+
         self.cyl_sub_ax = 8
         self.cyl_sub_hgt = 4
         self.cyl_sub_bas = 0
+
         self.cn_sub_ax = 8
         self.cn_sub_hgt = 3
         self.cn_sub_bas = 0
@@ -473,6 +477,7 @@ class Scatter(object):
         self.min_rot_x = 0
         self.min_rot_y = 0
         self.min_rot_z = 0
+
         self.max_rot_x = 360
         self.max_rot_y = 360
         self.max_rot_z = 360
@@ -480,6 +485,7 @@ class Scatter(object):
         self.min_scl_x = 0.8
         self.min_scl_y = 0.8
         self.min_scl_z = 0.8
+
         self.max_scl_x = 1.2
         self.max_scl_y = 1.2
         self.max_scl_z = 1.2
@@ -532,69 +538,44 @@ class Scatter(object):
 
     def scatter_obj(self):
         """scatter an Object"""
-        """  sct_den = random.sample(vert,
-                              k=int(float(len(vert_list) *
-                                    (self.defaultDen.def_density
-                                         )))"""
         vert_list = cmds.ls(selection=True, fl=True)
-
-        print(float(len(vert_list) * self.def_density))
+        den_list = random.sample(vert_list,
+                                 int(round(float(len(vert_list)
+                                                 * self.def_density))))
         scatter_grp = cmds.group(n='scatter_grp', a=False)
         object_to_instance = vert_list[0]
         if cmds.objectType(object_to_instance) == 'transform':
-            for vert in vert_list:
+            for vert in den_list:
                 vertex_pos = cmds.xform(vert, q=True, ws=True, t=True)
                 new_instance = cmds.instance(object_to_instance, n='obj_inst')
                 cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
                           new_instance)
-
-                rand_rot_x = random.uniform(self.min_rot_x,
-                                            self.max_rot_x)
-                rand_rot_y = random.uniform(self.min_rot_y,
-                                            self.max_rot_y)
-                rand_rot_z = random.uniform(self.min_rot_z,
-                                            self.max_rot_z)
-                cmds.rotate(rand_rot_x,
-                            rand_rot_y,
-                            rand_rot_z,
-                            new_instance, relative=True, objectSpace=True)
-
-                rand_scl_x = random.uniform(self.min_scl_x,
-                                            self.max_scl_x)
-                rand_scl_y = random.uniform(self.min_scl_y,
-                                            self.max_scl_y)
-                rand_scl_z = random.uniform(self.min_scl_z,
-                                            self.max_scl_z)
-                cmds.scale(rand_scl_x,
-                           rand_scl_y,
-                           rand_scl_z,
-                           new_instance, relative=True)
-
-        cmds.delete(vert_list[0], 'obj_inst')
-        cmds.xform(scatter_grp, cp=True)
+        cmds.delete(vert_list[0])
 
     def scatter_rotate_obj(self):
         obj_list = cmds.ls('obj_inst*', dag=1)
-        rand_rot_x = random.uniform(self.min_rot_x,
-                                    self.max_rot_x)
-        rand_rot_y = random.uniform(self.min_rot_y,
-                                    self.max_rot_y)
-        rand_rot_z = random.uniform(self.min_rot_z,
-                                    self.max_rot_z)
-        cmds.rotate(rand_rot_x,
-                    rand_rot_y,
-                    rand_rot_z,
-                    obj_list, relative=True, objectSpace=True, ocp=True)
+        for obj in obj_list:
+            rand_rot_x = random.uniform(self.min_rot_x,
+                                        self.max_rot_x)
+            rand_rot_y = random.uniform(self.min_rot_y,
+                                        self.max_rot_y)
+            rand_rot_z = random.uniform(self.min_rot_z,
+                                        self.max_rot_z)
+            cmds.rotate(rand_rot_x,
+                        rand_rot_y,
+                        rand_rot_z,
+                        obj, relative=True, objectSpace=True, ocp=True)
 
     def scatter_scale_obj(self):
-        obj_list = cmds.ls('obj_inst*', dag=1)
-        rand_scl_x = random.uniform(self.min_scl_x,
-                                    self.max_scl_x)
-        rand_scl_y = random.uniform(self.min_scl_y,
-                                    self.max_scl_y)
-        rand_scl_z = random.uniform(self.min_scl_z,
-                                    self.max_scl_z)
-        cmds.scale(rand_scl_x,
-                   rand_scl_y,
-                   rand_scl_z,
-                   obj_list, relative=True)
+        obj_list = cmds.ls('obj_inst*', fl=True, dag=1)
+        for obj in obj_list:
+            rand_scl_x = random.uniform(self.min_scl_x,
+                                        self.max_scl_x)
+            rand_scl_y = random.uniform(self.min_scl_y,
+                                        self.max_scl_y)
+            rand_scl_z = random.uniform(self.min_scl_z,
+                                        self.max_scl_z)
+            cmds.scale(rand_scl_x,
+                       rand_scl_y,
+                       rand_scl_z,
+                       obj, relative=True)
