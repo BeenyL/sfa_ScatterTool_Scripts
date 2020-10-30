@@ -26,7 +26,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.setMaximumHeight(255)
         self.setWindowFlags(self.windowFlags() ^
                             QtCore.Qt.WindowContextHelpButtonHint)
-        self.defaultVar = DefaultVar()
+        self.scatterT = Scatter()
         self.create_ui()
         self.create_connections()
 
@@ -95,171 +95,92 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_z_rot_sbx.valueChanged.connect(self.update_rot_max_val_z)
 
     def update_sub_val_ax(self):
-        self.defaultVar.cur_sub_ax = self.sub_ax_sbx.value()
+        self.scatterT.cur_sub_ax = self.sub_ax_sbx.value()
 
     def update_sub_val_hgt(self):
-        self.defaultVar.cur_sub_hgt = self.sub_hgt_sbx.value()
+        self.scatterT.cur_sub_hgt = self.sub_hgt_sbx.value()
 
     def update_sub_val_bas(self):
-        self.defaultVar.cur_sub_bas = self.sub_bas_sbx.value()
+        self.scatterT.cur_sub_bas = self.sub_bas_sbx.value()
 
     def update_rot_min_val_x(self):
-        self.defaultVar.min_rot_x = self.min_x_rot_sbx.value()
+        self.scatterT.min_rot_x = self.min_x_rot_sbx.value()
 
     def update_rot_min_val_y(self):
-        self.defaultVar.min_rot_y = self.min_y_rot_sbx.value()
+        self.scatterT.min_rot_y = self.min_y_rot_sbx.value()
 
     def update_rot_min_val_z(self):
-        self.defaultVar.min_rot_z = self.min_z_rot_sbx.value()
+        self.scatterT.min_rot_z = self.min_z_rot_sbx.value()
 
     def update_rot_max_val_x(self):
-        self.defaultVar.max_rot_x = self.max_x_rot_sbx.value()
+        self.scatterT.max_rot_x = self.max_x_rot_sbx.value()
 
     def update_rot_max_val_y(self):
-        self.defaultVar.max_rot_y = self.max_y_rot_sbx.value()
+        self.scatterT.max_rot_y = self.max_y_rot_sbx.value()
 
     def update_rot_max_val_z(self):
-        self.defaultVar.max_rot_z = self.max_z_rot_sbx.value()
+        self.scatterT.max_rot_z = self.max_z_rot_sbx.value()
 
     def update_scl_min_val_x(self):
-        self.defaultVar.min_scl_x = self.min_x_scl_sbx.value()
+        self.scatterT.min_scl_x = self.min_x_scl_sbx.value()
 
     def update_scl_min_val_y(self):
-        self.defaultVar.min_scl_y = self.min_y_scl_sbx.value()
+        self.scatterT.min_scl_y = self.min_y_scl_sbx.value()
 
     def update_scl_min_val_z(self):
-        self.defaultVar.min_scl_z = self.min_z_scl_sbx.value()
+        self.scatterT.min_scl_z = self.min_z_scl_sbx.value()
 
     def update_scl_max_val_x(self):
-        self.defaultVar.max_scl_x = self.max_x_scl_sbx.value()
+        self.scatterT.max_scl_x = self.max_x_scl_sbx.value()
 
     def update_scl_max_val_y(self):
-        self.defaultVar.max_scl_y = self.max_y_scl_sbx.value()
+        self.scatterT.max_scl_y = self.max_y_scl_sbx.value()
 
     def update_scl_max_val_z(self):
-        self.defaultVar.max_scl_z = self.max_z_scl_sbx.value()
+        self.scatterT.max_scl_z = self.max_z_scl_sbx.value()
 
     def update_sct_den_val(self):
-        self.defaultVar.def_density = self.scatter_density_sbx.value() / 100
+        self.scatterT.def_density = self.scatter_density_sbx.value() / 100
 
     @QtCore.Slot()
     def create_shape(self):
         """create polygon tool"""
         if self.shape_cmb.currentText() == "Cube":
-            cmds.polyCube(name="Cube",
-                          sw=self.defaultVar.cur_sub_ax,
-                          sh=self.defaultVar.cur_sub_hgt,
-                          sd=self.defaultVar.cur_sub_bas)
+            self.scatterT.cube()
         if self.shape_cmb.currentText() == "Sphere":
-            cmds.polySphere(name="Sphere",
-                            sa=self.defaultVar.cur_sub_ax,
-                            sh=self.defaultVar.cur_sub_hgt)
+            self.scatterT.sphere()
         if self.shape_cmb.currentText() == "Cylinder":
-            cmds.polyCylinder(name="Cylinder",
-                              sa=self.defaultVar.cur_sub_ax,
-                              sh=self.defaultVar.cur_sub_hgt,
-                              sc=self.defaultVar.cur_sub_bas)
+            self.scatterT.cylinder()
         if self.shape_cmb.currentText() == "Cone":
-            cmds.polyCone(name="Cone",
-                          sa=self.defaultVar.cur_sub_ax,
-                          sh=self.defaultVar.cur_sub_hgt,
-                          sc=self.defaultVar.cur_sub_bas)
+            self.scatterT.cone()
 
     @QtCore.Slot()
     def scatter_object(self):
-        """scatter an Object"""
-        """  sct_den = random.sample(vert,
-                                  k=int(float(len(vert_list) *
-                                        (self.defaultDen.def_density
-                                         )))"""
-        vert_list = cmds.ls(selection=True, fl=True)
-
-        print(float(len(vert_list) * self.defaultVar.def_density))
-        scatter_grp = cmds.group(n='scatter_grp', a=False)
-        object_to_instance = vert_list[0]
-        if cmds.objectType(object_to_instance) == 'transform':
-            for vert in vert_list:
-                vertex_pos = cmds.xform(vert, q=True, ws=True, t=True)
-                new_instance = cmds.instance(object_to_instance, n='obj_inst')
-                cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
-                          new_instance)
-
-                rand_rot_x = random.uniform(self.defaultVar.min_rot_x,
-                                            self.defaultVar.max_rot_x)
-                rand_rot_y = random.uniform(self.defaultVar.min_rot_y,
-                                            self.defaultVar.max_rot_y)
-                rand_rot_z = random.uniform(self.defaultVar.min_rot_z,
-                                            self.defaultVar.max_rot_z)
-                cmds.rotate(rand_rot_x,
-                            rand_rot_y,
-                            rand_rot_z,
-                            new_instance, relative=True, objectSpace=True)
-
-                rand_scl_x = random.uniform(self.defaultVar.min_scl_x,
-                                            self.defaultVar.max_scl_x)
-                rand_scl_y = random.uniform(self.defaultVar.min_scl_y,
-                                            self.defaultVar.max_scl_y)
-                rand_scl_z = random.uniform(self.defaultVar.min_scl_z,
-                                            self.defaultVar.max_scl_z)
-                cmds.scale(rand_scl_x,
-                           rand_scl_y,
-                           rand_scl_z,
-                           new_instance, relative=True)
-
-        cmds.delete(vert_list[0], 'obj_inst')
-        cmds.xform(scatter_grp, cp=True)
+        self.scatterT.scatter_obj()
 
     @QtCore.Slot()
     def scatter_rotate_object(self):
-        obj_list = cmds.ls('obj_inst*', dag=1)
-        rand_rot_x = random.uniform(self.defaultVar.min_rot_x,
-                                    self.defaultVar.max_rot_x)
-        rand_rot_y = random.uniform(self.defaultVar.min_rot_y,
-                                    self.defaultVar.max_rot_y)
-        rand_rot_z = random.uniform(self.defaultVar.min_rot_z,
-                                    self.defaultVar.max_rot_z)
-        cmds.rotate(rand_rot_x,
-                    rand_rot_y,
-                    rand_rot_z,
-                    obj_list, relative=True, objectSpace=True, ocp=True)
+        self.scatterT.scatter_rotate_obj()
 
     @QtCore.Slot()
     def scatter_scale_object(self):
-        obj_list = cmds.ls('obj_inst*', dag=1)
-        rand_scl_x = random.uniform(self.defaultVar.min_scl_x,
-                                    self.defaultVar.max_scl_x)
-        rand_scl_y = random.uniform(self.defaultVar.min_scl_y,
-                                    self.defaultVar.max_scl_y)
-        rand_scl_z = random.uniform(self.defaultVar.min_scl_z,
-                                    self.defaultVar.max_scl_z)
-        cmds.scale(rand_scl_x,
-                   rand_scl_y,
-                   rand_scl_z,
-                   obj_list, relative=True)
+        self.scatterT.scatter_scale_obj()
 
     @QtCore.Slot()
     def update_div(self):
         """update subdivision"""
         if self.shape_cmb.currentText() == "Cube":
-            self.defaultVar.cur_sub_ax = self.defaultVar.cb_sub_ax
-            self.defaultVar.cur_sub_hgt = self.defaultVar.cb_sub_hgt
-            self.defaultVar.cur_sub_bas = self.defaultVar.cb_sub_bas
+            self.scatterT.sub_div_cb()
         if self.shape_cmb.currentText() == "Sphere":
-            self.defaultVar.cur_sub_ax = self.defaultVar.s_sub_ax
-            self.defaultVar.cur_sub_hgt = self.defaultVar.s_sub_hgt
-            self.defaultVar.cur_sub_bas = self.defaultVar.s_sub_bas
+            self.scatterT.sub_div_s()
         if self.shape_cmb.currentText() == "Cylinder":
-            self.defaultVar.cur_sub_ax = self.defaultVar.cyl_sub_ax
-            self.defaultVar.cur_sub_hgt = self.defaultVar.cyl_sub_hgt
-            self.defaultVar.cur_sub_bas = self.defaultVar.cyl_sub_bas
+            self.scatterT.sub_div_cyl()
         if self.shape_cmb.currentText() == "Cone":
-            self.defaultVar.cur_sub_ax = self.defaultVar.cn_sub_ax
-            self.defaultVar.cur_sub_hgt = self.defaultVar.cn_sub_hgt
-            self.defaultVar.cur_sub_bas = self.defaultVar.cn_sub_bas
+            self.scatterT.sub_div_cn()
 
-        self.sub_ax_sbx.setValue(self.defaultVar.cur_sub_ax)
-        self.sub_hgt_sbx.setValue(self.defaultVar.cur_sub_hgt)
-        self.sub_bas_sbx.setValue(self.defaultVar.cur_sub_bas)
+        self.sub_ax_sbx.setValue(self.scatterT.cur_sub_ax)
+        self.sub_hgt_sbx.setValue(self.scatterT.cur_sub_hgt)
+        self.sub_bas_sbx.setValue(self.scatterT.cur_sub_bas)
 
     @QtCore.Slot()
     def cancel(self):
@@ -304,7 +225,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.sub_ax_sbx = QtWidgets.QSpinBox()
         self.sub_ax_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
         self.sub_ax_sbx.setFixedWidth(50)
-        self.sub_ax_sbx.setValue(self.defaultVar.cur_sub_ax)
+        self.sub_ax_sbx.setValue(self.scatterT.cur_sub_ax)
 
         self.sub_ax = QtWidgets.QLabel("Sub Axis")
         self.sub_ax.setFixedWidth(60)
@@ -314,7 +235,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.sub_hgt_sbx = QtWidgets.QSpinBox()
         self.sub_hgt_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
         self.sub_hgt_sbx.setFixedWidth(50)
-        self.sub_hgt_sbx.setValue(self.defaultVar.cur_sub_hgt)
+        self.sub_hgt_sbx.setValue(self.scatterT.cur_sub_hgt)
 
         self.sub_hgt = QtWidgets.QLabel("Sub Height")
         self.sub_hgt.setFixedWidth(65)
@@ -324,7 +245,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.sub_bas_sbx = QtWidgets.QSpinBox()
         self.sub_bas_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
         self.sub_bas_sbx.setFixedWidth(50)
-        self.sub_bas_sbx.setValue(self.defaultVar.cur_sub_bas)
+        self.sub_bas_sbx.setValue(self.scatterT.cur_sub_bas)
 
         self.sub_bas = QtWidgets.QLabel("Sub Base")
         self.sub_bas.setFixedWidth(60)
@@ -374,7 +295,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.min_x_rot_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.min_x_rot_sbx.setFixedWidth(50)
-        self.min_x_rot_sbx.setValue(self.defaultVar.min_rot_x)
+        self.min_x_rot_sbx.setValue(self.scatterT.min_rot_x)
 
         self.rotX_lbl = QtWidgets.QLabel("X")
         self.rotX_lbl.setFixedWidth(15)
@@ -388,7 +309,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_x_rot_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.max_x_rot_sbx.setFixedWidth(50)
-        self.max_x_rot_sbx.setValue(self.defaultVar.max_rot_x)
+        self.max_x_rot_sbx.setValue(self.scatterT.max_rot_x)
 
     def y_rot_sbx(self):
         self.min_y_rot_sbx = QtWidgets.QSpinBox()
@@ -396,7 +317,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.min_y_rot_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.min_y_rot_sbx.setFixedWidth(50)
-        self.min_y_rot_sbx.setValue(self.defaultVar.min_rot_y)
+        self.min_y_rot_sbx.setValue(self.scatterT.min_rot_y)
 
         self.rotY_lbl = QtWidgets.QLabel("Y")
         self.rotY_lbl.setFixedWidth(15)
@@ -410,7 +331,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_y_rot_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.max_y_rot_sbx.setFixedWidth(50)
-        self.max_y_rot_sbx.setValue(self.defaultVar.max_rot_y)
+        self.max_y_rot_sbx.setValue(self.scatterT.max_rot_y)
 
     def z_rot_sbx(self):
         self.min_z_rot_sbx = QtWidgets.QSpinBox()
@@ -418,7 +339,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.min_z_rot_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.min_z_rot_sbx.setFixedWidth(50)
-        self.min_z_rot_sbx.setValue(self.defaultVar.min_rot_z)
+        self.min_z_rot_sbx.setValue(self.scatterT.min_rot_z)
 
         self.rotZ_lbl = QtWidgets.QLabel("Z")
         self.rotZ_lbl.setFixedWidth(15)
@@ -432,7 +353,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_z_rot_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.max_z_rot_sbx.setFixedWidth(50)
-        self.max_z_rot_sbx.setValue(self.defaultVar.max_rot_z)
+        self.max_z_rot_sbx.setValue(self.scatterT.max_rot_z)
 
     def rnd_scale_ui(self):
         """random scale layout"""
@@ -465,7 +386,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.min_x_scl_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.min_x_scl_sbx.setFixedWidth(50)
-        self.min_x_scl_sbx.setValue(self.defaultVar.min_scl_x)
+        self.min_x_scl_sbx.setValue(self.scatterT.min_scl_x)
         self.sclX_lbl = QtWidgets.QLabel("X")
         self.sclX_lbl.setFixedWidth(15)
         self.sclX_lbl.setIndent(9)
@@ -479,7 +400,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_x_scl_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.max_x_scl_sbx.setFixedWidth(50)
-        self.max_x_scl_sbx.setValue(self.defaultVar.max_scl_x)
+        self.max_x_scl_sbx.setValue(self.scatterT.max_scl_x)
 
     def y_scl_sbx(self):
         self.min_y_scl_sbx = QtWidgets.QDoubleSpinBox()
@@ -489,7 +410,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.min_y_scl_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.min_y_scl_sbx.setFixedWidth(50)
-        self.min_y_scl_sbx.setValue(self.defaultVar.min_scl_y)
+        self.min_y_scl_sbx.setValue(self.scatterT.min_scl_y)
         self.sclY_lbl = QtWidgets.QLabel("Y")
         self.sclY_lbl.setFixedWidth(15)
         self.sclY_lbl.setIndent(9)
@@ -503,7 +424,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_y_scl_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.max_y_scl_sbx.setFixedWidth(50)
-        self.max_y_scl_sbx.setValue(self.defaultVar.max_scl_y)
+        self.max_y_scl_sbx.setValue(self.scatterT.max_scl_y)
 
     def z_scl_sbx(self):
         self.min_z_scl_sbx = QtWidgets.QDoubleSpinBox()
@@ -513,7 +434,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.min_z_scl_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.min_z_scl_sbx.setFixedWidth(50)
-        self.min_z_scl_sbx.setValue(self.defaultVar.min_scl_z)
+        self.min_z_scl_sbx.setValue(self.scatterT.min_scl_z)
         self.sclZ_lbl = QtWidgets.QLabel("Z")
         self.sclZ_lbl.setFixedWidth(15)
         self.sclZ_lbl.setIndent(9)
@@ -527,10 +448,10 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_z_scl_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
         self.max_z_scl_sbx.setFixedWidth(50)
-        self.max_z_scl_sbx.setValue(self.defaultVar.max_scl_z)
+        self.max_z_scl_sbx.setValue(self.scatterT.max_scl_z)
 
 
-class DefaultVar(object):
+class Scatter(object):
 
     def __init__(self):
         self.cur_sub_ax = 1
@@ -565,3 +486,115 @@ class DefaultVar(object):
 
         self.def_density = 1.0
 
+    def cube(self):
+        """create polygon"""
+        cmds.polyCube(name="Cube",
+                      sw=self.cur_sub_ax,
+                      sh=self.cur_sub_hgt,
+                      sd=self.cur_sub_bas)
+
+    def sphere(self):
+        cmds.polySphere(name="Sphere",
+                        sa=self.cur_sub_ax,
+                        sh=self.cur_sub_hgt)
+
+    def cylinder(self):
+        cmds.polyCylinder(name="Cylinder",
+                          sa=self.cur_sub_ax,
+                          sh=self.cur_sub_hgt,
+                          sc=self.cur_sub_bas)
+
+    def cone(self):
+        cmds.polyCone(name="Cone",
+                      sa=self.cur_sub_ax,
+                      sh=self.cur_sub_hgt,
+                      sc=self.cur_sub_bas)
+
+    def sub_div_cb(self):
+        self.cur_sub_ax = self.cb_sub_ax
+        self.cur_sub_hgt = self.cb_sub_hgt
+        self.cur_sub_bas = self.cb_sub_bas
+
+    def sub_div_s(self):
+        self.cur_sub_ax = self.s_sub_ax
+        self.cur_sub_hgt = self.s_sub_hgt
+        self.cur_sub_bas = self.s_sub_bas
+
+    def sub_div_cyl(self):
+        self.cur_sub_ax = self.cyl_sub_ax
+        self.cur_sub_hgt = self.cyl_sub_hgt
+        self.cur_sub_bas = self.cyl_sub_bas
+
+    def sub_div_cn(self):
+        self.cur_sub_ax = self.cn_sub_ax
+        self.cur_sub_hgt = self.cn_sub_hgt
+        self.cur_sub_bas = self.cn_sub_bas
+
+    def scatter_obj(self):
+        """scatter an Object"""
+        """  sct_den = random.sample(vert,
+                              k=int(float(len(vert_list) *
+                                    (self.defaultDen.def_density
+                                         )))"""
+        vert_list = cmds.ls(selection=True, fl=True)
+
+        print(float(len(vert_list) * self.def_density))
+        scatter_grp = cmds.group(n='scatter_grp', a=False)
+        object_to_instance = vert_list[0]
+        if cmds.objectType(object_to_instance) == 'transform':
+            for vert in vert_list:
+                vertex_pos = cmds.xform(vert, q=True, ws=True, t=True)
+                new_instance = cmds.instance(object_to_instance, n='obj_inst')
+                cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
+                          new_instance)
+
+                rand_rot_x = random.uniform(self.min_rot_x,
+                                            self.max_rot_x)
+                rand_rot_y = random.uniform(self.min_rot_y,
+                                            self.max_rot_y)
+                rand_rot_z = random.uniform(self.min_rot_z,
+                                            self.max_rot_z)
+                cmds.rotate(rand_rot_x,
+                            rand_rot_y,
+                            rand_rot_z,
+                            new_instance, relative=True, objectSpace=True)
+
+                rand_scl_x = random.uniform(self.min_scl_x,
+                                            self.max_scl_x)
+                rand_scl_y = random.uniform(self.min_scl_y,
+                                            self.max_scl_y)
+                rand_scl_z = random.uniform(self.min_scl_z,
+                                            self.max_scl_z)
+                cmds.scale(rand_scl_x,
+                           rand_scl_y,
+                           rand_scl_z,
+                           new_instance, relative=True)
+
+        cmds.delete(vert_list[0], 'obj_inst')
+        cmds.xform(scatter_grp, cp=True)
+
+    def scatter_rotate_obj(self):
+        obj_list = cmds.ls('obj_inst*', dag=1)
+        rand_rot_x = random.uniform(self.min_rot_x,
+                                    self.max_rot_x)
+        rand_rot_y = random.uniform(self.min_rot_y,
+                                    self.max_rot_y)
+        rand_rot_z = random.uniform(self.min_rot_z,
+                                    self.max_rot_z)
+        cmds.rotate(rand_rot_x,
+                    rand_rot_y,
+                    rand_rot_z,
+                    obj_list, relative=True, objectSpace=True, ocp=True)
+
+    def scatter_scale_obj(self):
+        obj_list = cmds.ls('obj_inst*', dag=1)
+        rand_scl_x = random.uniform(self.min_scl_x,
+                                    self.max_scl_x)
+        rand_scl_y = random.uniform(self.min_scl_y,
+                                    self.max_scl_y)
+        rand_scl_z = random.uniform(self.min_scl_z,
+                                    self.max_scl_z)
+        cmds.scale(rand_scl_x,
+                   rand_scl_y,
+                   rand_scl_z,
+                   obj_list, relative=True)
