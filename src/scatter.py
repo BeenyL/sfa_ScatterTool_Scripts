@@ -544,12 +544,10 @@ class Scatter(object):
                                                  * self.def_density))))
         scatter_grp = cmds.group(n='scatter_grp', a=False)
         object_to_instance = vert_list[0]
-        main_object = vert_list[1]
         if cmds.objectType(object_to_instance) == 'transform':
             for vert in den_list:
                 vertex_pos = cmds.xform(vert, q=True, ws=True, t=True)
                 new_instance = cmds.instance(object_to_instance, n='obj_inst')
-                cmds.normalConstraint(main_object, new_instance)
                 cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
                           new_instance)
         cmds.delete(vert_list[0])
