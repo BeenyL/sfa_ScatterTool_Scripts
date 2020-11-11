@@ -1,6 +1,6 @@
 import maya.OpenMayaUI as omui
 import maya.cmds as cmds
-import maya.mel as mel
+import pymel.core as pm
 import maya.OpenMaya as om
 import random
 from PySide2 import QtWidgets, QtGui, QtCore
@@ -21,9 +21,9 @@ class ScatterUI(QtWidgets.QDialog):
         super(ScatterUI, self).__init__(parent=maya_main_window())
         self.setWindowTitle("Scatter UI")
         self.setMinimumWidth(600)
-        self.setMaximumWidth(650)
-        self.setMinimumHeight(250)
-        self.setMaximumHeight(255)
+        self.setMaximumWidth(600)
+        self.setMinimumHeight(300)
+        self.setMaximumHeight(300)
         self.setWindowFlags(self.windowFlags() ^
                             QtCore.Qt.WindowContextHelpButtonHint)
         self.scatterT = Scatter()
@@ -33,12 +33,15 @@ class ScatterUI(QtWidgets.QDialog):
     def create_ui(self):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: Bold 20px")
+        self.selected_obj = QtWidgets.QLabel("Selected Objects")
+        self.selected_obj.setStyleSheet("font: Bold 10px")
         self.create_poly = QtWidgets.QLabel("Create a Polygon")
         self.create_poly.setStyleSheet("font: Bold 10px")
         self.scatter_rot_lbl = QtWidgets.QLabel("Scatter Rotation")
         self.scatter_rot_lbl.setStyleSheet("font: Bold 10px")
         self.scatter_scl_lbl = QtWidgets.QLabel("Scatter Scale")
         self.scatter_scl_lbl.setStyleSheet("font: Bold 10px")
+        self.selected_obj_lay = self.selected_obj_ui()
         self.create_obj_lay = self.create_obj_layout_ui()
         self.sct_cnl_lay = self.sct_cnl_layout_ui()
         self.rnd_rotation_lay = self.rnd_rotation_ui()
@@ -49,6 +52,8 @@ class ScatterUI(QtWidgets.QDialog):
     def ui_main_layout(self):
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
+        self.main_lay.addWidget(self.selected_obj)
+        self.main_lay.addLayout(self.selected_obj_lay)
         self.main_lay.addWidget(self.create_poly)
         self.main_lay.addLayout(self.create_obj_lay)
         self.main_lay.addWidget(self.scatter_rot_lbl)
@@ -61,7 +66,9 @@ class ScatterUI(QtWidgets.QDialog):
         self.setLayout(self.main_lay)
 
     def create_connections(self):
+        self.obj_to_inst_btn.clicked.connect(self.update_sct_obj_inst)
         self.scatter_btn.clicked.connect(self.scatter_object)
+        self.scatter_nrm_btn.clicked.connect(self.scatter_obj_norm)
         self.cancel_btn.clicked.connect(self.cancel)
         self.create_shape_connections()
         self.rot_btn.clicked.connect(self.scatter_rotate_object)
@@ -142,6 +149,10 @@ class ScatterUI(QtWidgets.QDialog):
     def update_sct_den_val(self):
         self.scatterT.def_density = self.scatter_density_sbx.value() / 100
 
+    def update_sct_obj_inst(self):
+        self.scatterT.sel_obj_inst()
+        self.obj_to_inst_le.setText(self.scatterT.inst_obj_name)
+
     @QtCore.Slot()
     def create_shape(self):
         """create polygon tool"""
@@ -157,6 +168,10 @@ class ScatterUI(QtWidgets.QDialog):
     @QtCore.Slot()
     def scatter_object(self):
         self.scatterT.scatter_obj()
+
+    @QtCore.Slot()
+    def scatter_obj_norm(self):
+        self.scatterT.scatter_face_normal()
 
     @QtCore.Slot()
     def scatter_rotate_object(self):
@@ -221,6 +236,17 @@ class ScatterUI(QtWidgets.QDialog):
         layout.addWidget(self.sub_bas_sbx, 0, 8)
         return layout
 
+    def selected_obj_ui(self):
+        self.set_selected_obj()
+        self.set_selected_obj_to_sct()
+        self.obj_to_inst_btn = QtWidgets.QPushButton("Set Object")
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.obj_to_inst_txt, 0, 0)
+        layout.addWidget(self.obj_to_inst_le, 0, 1)
+        layout.addWidget(self.obj_to_inst_btn, 0, 2)
+        layout.addWidget(self.obj_to_scat_txt, 0, 3)
+        return layout
+
     def sub_div_ax_sbx(self):
         self.sub_ax_sbx = QtWidgets.QSpinBox()
         self.sub_ax_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
@@ -257,13 +283,28 @@ class ScatterUI(QtWidgets.QDialog):
         self.shape_cmb.addItems(['Cube', 'Sphere', 'Cylinder', 'Cone'])
         self.shape_btn = QtWidgets.QPushButton("Create Shape")
 
+    def set_selected_obj(self):
+        self.obj_to_inst_txt = QtWidgets.QLabel("Object to Instance")
+        self.obj_to_inst_le = QtWidgets.QLineEdit()
+        self.obj_to_inst_le.setReadOnly(True)
+        self.obj_to_inst_le.setText("Object")
+        self.obj_to_inst_le.setFixedWidth(95)
+
+    def set_selected_obj_to_sct(self):
+        self.obj_to_scat_txt = QtWidgets.QLabel("Note: Object to Scatter to"
+                                                " is the current selected"
+                                                " object.")
+        self.obj_to_scat_txt.setStyleSheet("font: Bold")
+
     def sct_cnl_layout_ui(self):
         """scatter and cancel layout"""
         self.scatter_btn = QtWidgets.QPushButton("Scatter Object")
+        self.scatter_nrm_btn = QtWidgets.QPushButton("Test Normal")
         self.cancel_btn = QtWidgets.QPushButton("Cancel")
         layout = QtWidgets.QGridLayout()
         layout.addWidget(self.scatter_btn, 0, 0)
-        layout.addWidget(self.cancel_btn, 0, 1)
+        layout.addWidget(self.scatter_nrm_btn, 0, 1)
+        layout.addWidget(self.cancel_btn, 0, 2)
         return layout
 
     def rnd_rotation_ui(self):
@@ -492,6 +533,9 @@ class Scatter(object):
 
         self.def_density = 1.0
 
+        self.inst_obj_name = ""
+        self.sct_obj_name = ""
+
     def cube(self):
         """create polygon"""
         cmds.polyCube(name="Cube",
@@ -536,21 +580,83 @@ class Scatter(object):
         self.cur_sub_hgt = self.cn_sub_hgt
         self.cur_sub_bas = self.cn_sub_bas
 
+    def sel_obj_inst(self):
+        """select object to instance"""
+        sel_lst = []
+
+        if len(sel_lst) > 0:
+            del sel_lst[:]
+
+        sel_lst = cmds.ls(selection=True, sn=True, fl=True)
+        self.sel_obj_inst = sel_lst[0]
+        self.inst_obj_name = str(sel_lst[0])
+
     def scatter_obj(self):
         """scatter an Object"""
         vert_list = cmds.ls(selection=True, fl=True)
         den_list = random.sample(vert_list,
                                  int(round(float(len(vert_list)
-                                                 * self.def_density))))
-        scatter_grp = cmds.group(n='scatter_grp', a=False)
-        object_to_instance = vert_list[0]
+                                     * self.def_density))))
+        object_to_instance = self.sel_obj_inst
         if cmds.objectType(object_to_instance) == 'transform':
             for vert in den_list:
-                vertex_pos = cmds.xform(vert, q=True, ws=True, t=True)
+                meshvert = pm.MeshVertex(vert)
+                vert_normal = meshvert.getNormal()
+                up_vector = pm.dt.Vector(0.0, 1.0, 0.0)
+                tangent = vert_normal.cross(up_vector).normal()
+                tangent2 = vert_normal.cross(tangent).normal()
+                pos = cmds.xform([vert], q=True, ws=True, t=True)
+
+                matrix_trans = [tangent2.x, tangent2.y, tangent2.z, 0.0,
+                                vert_normal.x, vert_normal.y, vert_normal.z,
+                                0.0,
+                                tangent.x, tangent.y, tangent.z, 0.0,
+                                pos[0], pos[1], pos[2], 1.0]
+
                 new_instance = cmds.instance(object_to_instance, n='obj_inst')
-                cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
-                          new_instance)
-        cmds.delete(vert_list[0])
+
+                cmds.xform(new_instance, ws=True, matrix=matrix_trans)
+
+                #cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
+                          #new_instance)
+
+        scatter_grp = cmds.group(em=True, n='scatter_grp')
+        cmds.parent('obj_inst*', scatter_grp)
+
+    def scatter_face_normal(self):
+        face_list = cmds.ls(selection=True)
+        vert = cmds.ls(selection=True)
+        verts = cmds.ls(face_list[1], fl=True)
+        object_to_instance = face_list[0]
+        faces = cmds.polyListComponentConversion(face_list,
+                                                 fromVertex=True,
+                                                 toFace=True)
+        faces = cmds.filterExpand(faces, selectionMask=34, expand=True)
+
+        face_normals = []
+
+        for face in faces:
+            mesh_face = pm.MeshFace(face)
+            mesh_face.getNormal()
+            mesh_face = pm.MeshFace(face)
+            face_normals.append(mesh_face.getNormal())
+
+        sum_of_normals = sum(face_normals)
+
+        avg_vtx_normal = sum_of_normals / len(sum_of_normals)
+        avg_vtx_normal.normalize()
+        tangent = avg_vtx_normal.cross(pm.dt.Vector(0, 1, 0))
+        tangent.normalize()
+        tangent2 = avg_vtx_normal.cross(tangent)
+        tangent2.normalize()
+        pos = cmds.xform(verts, query=True, ws=True, translation=True)
+        matrix = [tangent2.x, tangent2.y, tangent2.z, 0.0,
+                  avg_vtx_normal.x, avg_vtx_normal.y, avg_vtx_normal.z, 0.0,
+                  tangent.x, tangent.y, tangent.z, 0.0,
+                  pos[0], pos[1], pos[2], 1.0]
+
+        scat_int = cmds.instance(object_to_instance, n='obj_inst')
+        cmds.xform(scat_int, ws=True, matrix=matrix)
 
     def scatter_rotate_obj(self):
         obj_list = cmds.ls('obj_inst*', dag=1)
