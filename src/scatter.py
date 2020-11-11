@@ -68,7 +68,7 @@ class ScatterUI(QtWidgets.QDialog):
     def create_connections(self):
         self.obj_to_inst_btn.clicked.connect(self.update_sct_obj_inst)
         self.scatter_btn.clicked.connect(self.scatter_object)
-        self.scatter_nrm_btn.clicked.connect(self.scatter_obj_norm)
+        self.inst_face_cbx.stateChanged.connect(self.update_inst_face_cbx)
         self.cancel_btn.clicked.connect(self.cancel)
         self.create_shape_connections()
         self.rot_btn.clicked.connect(self.scatter_rotate_object)
@@ -153,6 +153,9 @@ class ScatterUI(QtWidgets.QDialog):
         self.scatterT.sel_obj_inst()
         self.obj_to_inst_le.setText(self.scatterT.inst_obj_name)
 
+    def update_inst_face_cbx(self):
+        self.scatterT.is_face_normal = self.inst_face_cbx.isChecked()
+
     @QtCore.Slot()
     def create_shape(self):
         """create polygon tool"""
@@ -168,10 +171,6 @@ class ScatterUI(QtWidgets.QDialog):
     @QtCore.Slot()
     def scatter_object(self):
         self.scatterT.scatter_obj()
-
-    @QtCore.Slot()
-    def scatter_obj_norm(self):
-        self.scatterT.scatter_face_normal()
 
     @QtCore.Slot()
     def scatter_rotate_object(self):
@@ -299,11 +298,11 @@ class ScatterUI(QtWidgets.QDialog):
     def sct_cnl_layout_ui(self):
         """scatter and cancel layout"""
         self.scatter_btn = QtWidgets.QPushButton("Scatter Object")
-        self.scatter_nrm_btn = QtWidgets.QPushButton("Test Normal")
+        self.inst_face_cbx = QtWidgets.QCheckBox("Face Normal")
         self.cancel_btn = QtWidgets.QPushButton("Cancel")
         layout = QtWidgets.QGridLayout()
         layout.addWidget(self.scatter_btn, 0, 0)
-        layout.addWidget(self.scatter_nrm_btn, 0, 1)
+        layout.addWidget(self.inst_face_cbx, 0, 1)
         layout.addWidget(self.cancel_btn, 0, 2)
         return layout
 
@@ -536,6 +535,8 @@ class Scatter(object):
         self.inst_obj_name = ""
         self.sct_obj_name = ""
 
+        self.is_face_normal = False
+
     def cube(self):
         """create polygon"""
         cmds.polyCube(name="Cube",
@@ -599,64 +600,40 @@ class Scatter(object):
                                      * self.def_density))))
         object_to_instance = self.sel_obj_inst
         if cmds.objectType(object_to_instance) == 'transform':
-            for vert in den_list:
-                meshvert = pm.MeshVertex(vert)
-                vert_normal = meshvert.getNormal()
-                up_vector = pm.dt.Vector(0.0, 1.0, 0.0)
-                tangent = vert_normal.cross(up_vector).normal()
-                tangent2 = vert_normal.cross(tangent).normal()
-                pos = cmds.xform([vert], q=True, ws=True, t=True)
-
-                matrix_trans = [tangent2.x, tangent2.y, tangent2.z, 0.0,
-                                vert_normal.x, vert_normal.y, vert_normal.z,
-                                0.0,
-                                tangent.x, tangent.y, tangent.z, 0.0,
-                                pos[0], pos[1], pos[2], 1.0]
-
-                new_instance = cmds.instance(object_to_instance, n='obj_inst')
-
-                cmds.xform(new_instance, ws=True, matrix=matrix_trans)
-
-                #cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
-                          #new_instance)
+            if self.is_face_normal is False:
+                self.scatter_face_up(den_list, object_to_instance)
+            else:
+                self.scatter_face_normal(den_list, object_to_instance)
 
         scatter_grp = cmds.group(em=True, n='scatter_grp')
         cmds.parent('obj_inst*', scatter_grp)
 
-    def scatter_face_normal(self):
-        face_list = cmds.ls(selection=True)
-        vert = cmds.ls(selection=True)
-        verts = cmds.ls(face_list[1], fl=True)
-        object_to_instance = face_list[0]
-        faces = cmds.polyListComponentConversion(face_list,
-                                                 fromVertex=True,
-                                                 toFace=True)
-        faces = cmds.filterExpand(faces, selectionMask=34, expand=True)
+    def scatter_face_up(self, den_list, object_to_instance):
+        for vert in den_list:
+            vertex_pos = cmds.xform(vert, q=True, ws=True,
+                                    t=True)
+            new_instance = cmds.instance(object_to_instance, n='obj_inst')
+            cmds.move(vertex_pos[0], vertex_pos[1], vertex_pos[2],
+                      new_instance)
 
-        face_normals = []
+    def scatter_face_normal(self, den_list, object_to_instance):
+        for vert in den_list:
+            mesh_vert = pm.MeshVertex(vert)
+            vert_normal = mesh_vert.getNormal()
+            up_vector = pm.dt.Vector(0.0, 1.0, 0.0)
+            tangent = vert_normal.cross(up_vector).normal()
+            tangent2 = vert_normal.cross(tangent).normal()
+            pos = cmds.xform([vert], q=True, ws=True, t=True)
 
-        for face in faces:
-            mesh_face = pm.MeshFace(face)
-            mesh_face.getNormal()
-            mesh_face = pm.MeshFace(face)
-            face_normals.append(mesh_face.getNormal())
+            matrix_trans = [tangent2.x, tangent2.y, tangent2.z, 0.0,
+                            vert_normal.x, vert_normal.y, vert_normal.z,
+                            0.0,
+                            tangent.x, tangent.y, tangent.z, 0.0,
+                            pos[0], pos[1], pos[2], 1.0]
 
-        sum_of_normals = sum(face_normals)
+            new_instance = cmds.instance(object_to_instance, n='obj_inst')
 
-        avg_vtx_normal = sum_of_normals / len(sum_of_normals)
-        avg_vtx_normal.normalize()
-        tangent = avg_vtx_normal.cross(pm.dt.Vector(0, 1, 0))
-        tangent.normalize()
-        tangent2 = avg_vtx_normal.cross(tangent)
-        tangent2.normalize()
-        pos = cmds.xform(verts, query=True, ws=True, translation=True)
-        matrix = [tangent2.x, tangent2.y, tangent2.z, 0.0,
-                  avg_vtx_normal.x, avg_vtx_normal.y, avg_vtx_normal.z, 0.0,
-                  tangent.x, tangent.y, tangent.z, 0.0,
-                  pos[0], pos[1], pos[2], 1.0]
-
-        scat_int = cmds.instance(object_to_instance, n='obj_inst')
-        cmds.xform(scat_int, ws=True, matrix=matrix)
+            cmds.xform(new_instance, ws=True, matrix=matrix_trans)
 
     def scatter_rotate_obj(self):
         obj_list = cmds.ls('obj_inst*', dag=1)
