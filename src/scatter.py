@@ -22,8 +22,8 @@ class ScatterUI(QtWidgets.QDialog):
         self.setWindowTitle("Scatter UI")
         self.setMinimumWidth(600)
         self.setMaximumWidth(600)
-        self.setMinimumHeight(300)
-        self.setMaximumHeight(300)
+        self.setMinimumHeight(400)
+        self.setMaximumHeight(400)
         self.setWindowFlags(self.windowFlags() ^
                             QtCore.Qt.WindowContextHelpButtonHint)
         self.scatterT = Scatter()
@@ -41,11 +41,14 @@ class ScatterUI(QtWidgets.QDialog):
         self.scatter_rot_lbl.setStyleSheet("font: Bold 10px")
         self.scatter_scl_lbl = QtWidgets.QLabel("Scatter Scale")
         self.scatter_scl_lbl.setStyleSheet("font: Bold 10px")
+        self.scatter_hgt_lbl = QtWidgets.QLabel("Scatter Height")
+        self.scatter_hgt_lbl.setStyleSheet("font: Bold 10px")
         self.selected_obj_lay = self.selected_obj_ui()
         self.create_obj_lay = self.create_obj_layout_ui()
         self.sct_cnl_lay = self.sct_cnl_layout_ui()
         self.rnd_rotation_lay = self.rnd_rotation_ui()
         self.rnd_scale_lay = self.rnd_scale_ui()
+        self.rnd_height_lay = self.rnd_height_ui()
         self.create_den_sct_lay = self.create_density_scatter_ui()
         self.ui_main_layout()
 
@@ -60,6 +63,8 @@ class ScatterUI(QtWidgets.QDialog):
         self.main_lay.addLayout(self.rnd_rotation_lay)
         self.main_lay.addWidget(self.scatter_scl_lbl)
         self.main_lay.addLayout(self.rnd_scale_lay)
+        self.main_lay.addWidget(self.scatter_hgt_lbl)
+        self.main_lay.addLayout(self.rnd_height_lay)
         self.main_lay.addLayout(self.create_den_sct_lay)
         self.main_lay.addStretch()
         self.main_lay.addLayout(self.sct_cnl_lay)
@@ -75,7 +80,8 @@ class ScatterUI(QtWidgets.QDialog):
         self.scatter_rot_connections()
         self.scl_btn.clicked.connect(self.scatter_scale_object)
         self.scatter_scl_connections()
-
+        self.height_btn.clicked.connect(self.scatter_height_object)
+        self.scatter_hgt_connections()
         self.scatter_density_sbx.valueChanged.connect(self.update_sct_den_val)
 
     def create_shape_connections(self):
@@ -100,6 +106,10 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_x_rot_sbx.valueChanged.connect(self.update_rot_max_val_x)
         self.max_y_rot_sbx.valueChanged.connect(self.update_rot_max_val_y)
         self.max_z_rot_sbx.valueChanged.connect(self.update_rot_max_val_z)
+
+    def scatter_hgt_connections(self):
+        self.min_height_sbx.valueChanged.connect(self.update_min_hgt)
+        self.max_height_sbx.valueChanged.connect(self.update_max_hgt)
 
     def update_sub_val_ax(self):
         self.scatterT.cur_sub_ax = self.sub_ax_sbx.value()
@@ -146,6 +156,12 @@ class ScatterUI(QtWidgets.QDialog):
     def update_scl_max_val_z(self):
         self.scatterT.max_scl_z = self.max_z_scl_sbx.value()
 
+    def update_min_hgt(self):
+        self.scatterT.min_height = self.min_height_sbx.value()
+
+    def update_max_hgt(self):
+        self.scatterT.max_height = self.max_height_sbx.value()
+
     def update_sct_den_val(self):
         self.scatterT.def_density = self.scatter_density_sbx.value() / 100
 
@@ -182,6 +198,10 @@ class ScatterUI(QtWidgets.QDialog):
     def scatter_scale_object(self):
         """scatter object scale"""
         self.scatterT.scatter_scale_obj()
+
+    @QtCore.Slot()
+    def scatter_height_object(self):
+        self.scatterT.scatter_height_obj()
 
     @QtCore.Slot()
     def update_div(self):
@@ -316,8 +336,47 @@ class ScatterUI(QtWidgets.QDialog):
         layout.addWidget(self.cancel_btn, 0, 2)
         return layout
 
+    def rnd_height_ui(self):
+        """random height layout"""
+        self.height_btn = QtWidgets.QPushButton("Randomize Height")
+        self.height_sbx()
+        layout = QtWidgets.QGridLayout()
+        layout.setColumnMinimumWidth(5, 212)
+        layout.addWidget(self.height_btn, 0, 0)
+        layout.addWidget(self.height_lbl, 0, 1)
+        layout.addWidget(self.min_height_sbx, 0, 2)
+        layout.addWidget(self.height_space, 0, 3)
+        layout.addWidget(self.max_height_sbx, 0, 4)
+        return layout
+
+    def height_sbx(self):
+        """min-max height spinbox"""
+        self.min_height_sbx = QtWidgets.QDoubleSpinBox()
+        self.min_height_sbx.setDecimals(2)
+        self.min_height_sbx.setSingleStep(.1)
+        self.min_height_sbx.setMinimum(-10)
+        self.min_height_sbx.setMaximum(100)
+        self.min_height_sbx.setButtonSymbols(
+            QtWidgets.QAbstractSpinBox.PlusMinus)
+        self.min_height_sbx.setFixedWidth(75)
+        self.min_height_sbx.setValue(self.scatterT.min_height)
+        self.height_lbl = QtWidgets.QLabel("Height")
+        self.height_lbl.setFixedWidth(50)
+        self.height_lbl.setIndent(10)
+        self.height_space = QtWidgets.QLabel("-")
+        self.height_space.setFixedWidth(10)
+        self.height_space.setStyleSheet("font: 20px")
+        self.max_height_sbx = QtWidgets.QDoubleSpinBox()
+        self.max_height_sbx.setDecimals(2)
+        self.max_height_sbx.setSingleStep(.1)
+        self.max_height_sbx.setMaximum(100)
+        self.max_height_sbx.setButtonSymbols(
+            QtWidgets.QAbstractSpinBox.PlusMinus)
+        self.max_height_sbx.setFixedWidth(75)
+        self.max_height_sbx.setValue(self.scatterT.max_height)
+
     def rnd_rotation_ui(self):
-        """random roatation layout"""
+        """random rotation layout"""
         self.rot_btn = QtWidgets.QPushButton("Randomize Rotation")
         self.x_rot_sbx()
         self.y_rot_sbx()
@@ -546,6 +605,9 @@ class Scatter(object):
         self.max_scl_y = 1.2
         self.max_scl_z = 1.2
 
+        self.min_height = -1
+        self.max_height = 10
+
         self.def_density = 1.0
 
         self.inst_obj_name = ""
@@ -682,3 +744,10 @@ class Scatter(object):
                        rand_scl_y,
                        rand_scl_z,
                        obj, relative=True)
+
+    def scatter_height_obj(self):
+        """random height"""
+        obj_list = cmds.ls('obj_inst*', fl=True)
+        for obj in obj_list:
+            rand_height = random.uniform(self.min_height, self.max_height)
+            cmds.move(rand_height, obj, y=True)
