@@ -170,14 +170,17 @@ class ScatterUI(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def scatter_object(self):
+        """scatter object"""
         self.scatterT.scatter_obj()
 
     @QtCore.Slot()
     def scatter_rotate_object(self):
+        """scatter object rotation"""
         self.scatterT.scatter_rotate_obj()
 
     @QtCore.Slot()
     def scatter_scale_object(self):
+        """scatter object scale"""
         self.scatterT.scatter_scale_obj()
 
     @QtCore.Slot()
@@ -202,6 +205,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.close()
 
     def create_density_scatter_ui(self):
+        """set scatter density"""
         self.scatter_density_sbx = QtWidgets.QDoubleSpinBox()
         self.scatter_density_sbx.setDecimals(0)
         self.scatter_density_sbx.setMaximum(100)
@@ -236,6 +240,7 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def selected_obj_ui(self):
+        """select object to instance"""
         self.set_selected_obj()
         self.set_selected_obj_to_sct()
         self.obj_to_inst_btn = QtWidgets.QPushButton("Set Object")
@@ -247,6 +252,7 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def sub_div_ax_sbx(self):
+        """sub div axis spinbox"""
         self.sub_ax_sbx = QtWidgets.QSpinBox()
         self.sub_ax_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
         self.sub_ax_sbx.setFixedWidth(50)
@@ -257,6 +263,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.sub_ax.setIndent(14)
 
     def sub_div_hgt_sbx(self):
+        """sub div height spinbox"""
         self.sub_hgt_sbx = QtWidgets.QSpinBox()
         self.sub_hgt_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
         self.sub_hgt_sbx.setFixedWidth(50)
@@ -267,6 +274,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.sub_hgt.setIndent(5)
 
     def sub_div_bas_sbx(self):
+        """sub div base spinbox"""
         self.sub_bas_sbx = QtWidgets.QSpinBox()
         self.sub_bas_sbx.setButtonSymbols(QtWidgets.QAbstractSpinBox.PlusMinus)
         self.sub_bas_sbx.setFixedWidth(50)
@@ -277,12 +285,14 @@ class ScatterUI(QtWidgets.QDialog):
         self.sub_bas.setIndent(14)
 
     def create_shape_cmb(self):
+        """create poly combobox"""
         self.shape_cmb = QtWidgets.QComboBox()
         self.shape_cmb.setFixedWidth(100)
         self.shape_cmb.addItems(['Cube', 'Sphere', 'Cylinder', 'Cone'])
         self.shape_btn = QtWidgets.QPushButton("Create Shape")
 
     def set_selected_obj(self):
+        """set object to instance lineEdit"""
         self.obj_to_inst_txt = QtWidgets.QLabel("Object to Instance")
         self.obj_to_inst_le = QtWidgets.QLineEdit()
         self.obj_to_inst_le.setReadOnly(True)
@@ -330,6 +340,7 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def x_rot_sbx(self):
+        """x rotation spinbox"""
         self.min_x_rot_sbx = QtWidgets.QSpinBox()
         self.min_x_rot_sbx.setMaximum(360)
         self.min_x_rot_sbx.setButtonSymbols(
@@ -352,6 +363,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_x_rot_sbx.setValue(self.scatterT.max_rot_x)
 
     def y_rot_sbx(self):
+        """y rotation spinbox"""
         self.min_y_rot_sbx = QtWidgets.QSpinBox()
         self.min_y_rot_sbx.setMaximum(360)
         self.min_y_rot_sbx.setButtonSymbols(
@@ -374,6 +386,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_y_rot_sbx.setValue(self.scatterT.max_rot_y)
 
     def z_rot_sbx(self):
+        """z rotation spinbox"""
         self.min_z_rot_sbx = QtWidgets.QSpinBox()
         self.min_z_rot_sbx.setMaximum(360)
         self.min_z_rot_sbx.setButtonSymbols(
@@ -419,6 +432,7 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def x_scl_sbx(self):
+        """x scale spinbox"""
         self.min_x_scl_sbx = QtWidgets.QDoubleSpinBox()
         self.min_x_scl_sbx.setDecimals(1)
         self.min_x_scl_sbx.setSingleStep(.1)
@@ -443,6 +457,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_x_scl_sbx.setValue(self.scatterT.max_scl_x)
 
     def y_scl_sbx(self):
+        """y scale spinbox"""
         self.min_y_scl_sbx = QtWidgets.QDoubleSpinBox()
         self.min_y_scl_sbx.setDecimals(1)
         self.min_y_scl_sbx.setSingleStep(.1)
@@ -467,6 +482,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.max_y_scl_sbx.setValue(self.scatterT.max_scl_y)
 
     def z_scl_sbx(self):
+        """z scale spinbox"""
         self.min_z_scl_sbx = QtWidgets.QDoubleSpinBox()
         self.min_z_scl_sbx.setDecimals(1)
         self.min_z_scl_sbx.setSingleStep(.1)
@@ -609,6 +625,7 @@ class Scatter(object):
         cmds.parent('obj_inst*', scatter_grp)
 
     def scatter_face_up(self, den_list, object_to_instance):
+        """scatter inst face up"""
         for vert in den_list:
             vertex_pos = cmds.xform(vert, q=True, ws=True,
                                     t=True)
@@ -617,6 +634,7 @@ class Scatter(object):
                       new_instance)
 
     def scatter_face_normal(self, den_list, object_to_instance):
+        """scatter inst face normal"""
         for vert in den_list:
             mesh_vert = pm.MeshVertex(vert)
             vert_normal = mesh_vert.getNormal()
@@ -636,6 +654,7 @@ class Scatter(object):
             cmds.xform(new_instance, ws=True, matrix=matrix_trans)
 
     def scatter_rotate_obj(self):
+        """random rotation"""
         obj_list = cmds.ls('obj_inst*', dag=1)
         for obj in obj_list:
             rand_rot_x = random.uniform(self.min_rot_x,
@@ -650,6 +669,7 @@ class Scatter(object):
                         obj, relative=True, objectSpace=True, ocp=True)
 
     def scatter_scale_obj(self):
+        """random scale"""
         obj_list = cmds.ls('obj_inst*', fl=True, dag=1)
         for obj in obj_list:
             rand_scl_x = random.uniform(self.min_scl_x,
