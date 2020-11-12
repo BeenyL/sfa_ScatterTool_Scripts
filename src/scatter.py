@@ -74,6 +74,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.obj_to_inst_btn.clicked.connect(self.update_sct_obj_inst)
         self.scatter_btn.clicked.connect(self.scatter_object)
         self.inst_face_cbx.stateChanged.connect(self.update_inst_face_cbx)
+        self.whole_sel_cbx.stateChanged.connect(self.update_whole_sel_cbx)
         self.cancel_btn.clicked.connect(self.cancel)
         self.create_shape_connections()
         self.rot_btn.clicked.connect(self.scatter_rotate_object)
@@ -171,6 +172,9 @@ class ScatterUI(QtWidgets.QDialog):
 
     def update_inst_face_cbx(self):
         self.scatterT.is_face_normal = self.inst_face_cbx.isChecked()
+
+    def update_whole_sel_cbx(self):
+        self.scatterT.is_whole_object = self.whole_sel_cbx.isChecked()
 
     @QtCore.Slot()
     def create_shape(self):
@@ -329,11 +333,13 @@ class ScatterUI(QtWidgets.QDialog):
         """scatter and cancel layout"""
         self.scatter_btn = QtWidgets.QPushButton("Scatter Object")
         self.inst_face_cbx = QtWidgets.QCheckBox("Face Normal")
+        self.whole_sel_cbx = QtWidgets.QCheckBox("Whole Object Selection")
         self.cancel_btn = QtWidgets.QPushButton("Cancel")
         layout = QtWidgets.QGridLayout()
         layout.addWidget(self.scatter_btn, 0, 0)
         layout.addWidget(self.inst_face_cbx, 0, 1)
-        layout.addWidget(self.cancel_btn, 0, 2)
+        layout.addWidget(self.whole_sel_cbx, 0, 2)
+        layout.addWidget(self.cancel_btn, 0, 3)
         return layout
 
     def rnd_height_ui(self):
@@ -610,10 +616,13 @@ class Scatter(object):
 
         self.def_density = 1.0
 
+        self.sel_lst = cmds.ls(selection=True, sn=True, fl=True)
+
         self.inst_obj_name = ""
-        self.sct_obj_name = ""
 
         self.is_face_normal = False
+
+        self.is_whole_object = False
 
     def cube(self):
         """create polygon"""
@@ -673,18 +682,33 @@ class Scatter(object):
     def scatter_obj(self):
         """scatter an Object"""
         vert_list = cmds.ls(selection=True, fl=True)
-        den_list = random.sample(vert_list,
-                                 int(round(float(len(vert_list)
-                                     * self.def_density))))
+        cmds.filterExpand(vert_list, selectionMask=31, expand=True)
+        obj_vert_list = cmds.ls(vert_list[0] + ".vtx[*]", flatten=True)
+
+        if self.is_whole_object is False:
+            den_list = random.sample(vert_list,
+                                     int(round(float(len(vert_list)
+                                         * self.def_density))))
+        else:
+            den_list = random.sample(obj_vert_list,
+                                     int(round(float(len(obj_vert_list)
+                                                     * self.def_density))))
         object_to_instance = self.sel_obj_inst
         if cmds.objectType(object_to_instance) == 'transform':
             if self.is_face_normal is False:
                 self.scatter_face_up(den_list, object_to_instance)
             else:
                 self.scatter_face_normal(den_list, object_to_instance)
+        self.rename_inst_obj_group()
 
+    def rename_inst_obj_group(self):
+        """rename instances in the group"""
+        ls_obj_inst = cmds.ls('obj_inst*')
         scatter_grp = cmds.group(em=True, n='scatter_grp')
         cmds.parent('obj_inst*', scatter_grp)
+        for obj in ls_obj_inst:
+            cmds.rename(obj, "group_" + "inst_obj" +
+                        str(ls_obj_inst.index(obj)))
 
     def scatter_face_up(self, den_list, object_to_instance):
         """scatter inst face up"""
@@ -712,7 +736,6 @@ class Scatter(object):
                             pos[0], pos[1], pos[2], 1.0]
 
             new_instance = cmds.instance(object_to_instance, n='obj_inst')
-
             cmds.xform(new_instance, ws=True, matrix=matrix_trans)
 
     def scatter_rotate_obj(self):
