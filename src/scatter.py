@@ -78,11 +78,8 @@ class ScatterUI(QtWidgets.QDialog):
         self.cancel_btn.clicked.connect(self.cancel)
         self.create_shape_connections()
         self.rot_btn.clicked.connect(self.scatter_rotate_object)
-        self.scatter_rot_connections()
         self.scl_btn.clicked.connect(self.scatter_scale_object)
-        self.scatter_scl_connections()
         self.height_btn.clicked.connect(self.scatter_height_object)
-        self.scatter_hgt_connections()
         self.scatter_density_sbx.valueChanged.connect(self.update_sct_den_val)
 
     def create_shape_connections(self):
@@ -92,87 +89,31 @@ class ScatterUI(QtWidgets.QDialog):
         self.sub_bas_sbx.valueChanged.connect(self.update_sub_val_bas)
         self.shape_cmb.currentIndexChanged.connect(self.update_div)
 
-    def scatter_scl_connections(self):
-        self.min_x_scl_sbx.valueChanged.connect(self.update_scl_min_val_x)
-        self.min_y_scl_sbx.valueChanged.connect(self.update_scl_min_val_y)
-        self.min_z_scl_sbx.valueChanged.connect(self.update_scl_min_val_z)
-        self.max_x_scl_sbx.valueChanged.connect(self.update_scl_max_val_x)
-        self.max_y_scl_sbx.valueChanged.connect(self.update_scl_max_val_y)
-        self.max_z_scl_sbx.valueChanged.connect(self.update_scl_max_val_z)
-
-    def scatter_rot_connections(self):
-        self.min_x_rot_sbx.valueChanged.connect(self.update_rot_min_val_x)
-        self.min_y_rot_sbx.valueChanged.connect(self.update_rot_min_val_y)
-        self.min_z_rot_sbx.valueChanged.connect(self.update_rot_min_val_z)
-        self.max_x_rot_sbx.valueChanged.connect(self.update_rot_max_val_x)
-        self.max_y_rot_sbx.valueChanged.connect(self.update_rot_max_val_y)
-        self.max_z_rot_sbx.valueChanged.connect(self.update_rot_max_val_z)
-
-    def scatter_hgt_connections(self):
-        self.min_height_sbx.valueChanged.connect(self.update_min_hgt)
-        self.max_height_sbx.valueChanged.connect(self.update_max_hgt)
-
+    @QtCore.Slot()
     def update_sub_val_ax(self):
         self.scatterT.cur_sub_ax = self.sub_ax_sbx.value()
 
+    @QtCore.Slot()
     def update_sub_val_hgt(self):
         self.scatterT.cur_sub_hgt = self.sub_hgt_sbx.value()
 
+    @QtCore.Slot()
     def update_sub_val_bas(self):
         self.scatterT.cur_sub_bas = self.sub_bas_sbx.value()
 
-    def update_rot_min_val_x(self):
-        self.scatterT.min_rot_x = self.min_x_rot_sbx.value()
-
-    def update_rot_min_val_y(self):
-        self.scatterT.min_rot_y = self.min_y_rot_sbx.value()
-
-    def update_rot_min_val_z(self):
-        self.scatterT.min_rot_z = self.min_z_rot_sbx.value()
-
-    def update_rot_max_val_x(self):
-        self.scatterT.max_rot_x = self.max_x_rot_sbx.value()
-
-    def update_rot_max_val_y(self):
-        self.scatterT.max_rot_y = self.max_y_rot_sbx.value()
-
-    def update_rot_max_val_z(self):
-        self.scatterT.max_rot_z = self.max_z_rot_sbx.value()
-
-    def update_scl_min_val_x(self):
-        self.scatterT.min_scl_x = self.min_x_scl_sbx.value()
-
-    def update_scl_min_val_y(self):
-        self.scatterT.min_scl_y = self.min_y_scl_sbx.value()
-
-    def update_scl_min_val_z(self):
-        self.scatterT.min_scl_z = self.min_z_scl_sbx.value()
-
-    def update_scl_max_val_x(self):
-        self.scatterT.max_scl_x = self.max_x_scl_sbx.value()
-
-    def update_scl_max_val_y(self):
-        self.scatterT.max_scl_y = self.max_y_scl_sbx.value()
-
-    def update_scl_max_val_z(self):
-        self.scatterT.max_scl_z = self.max_z_scl_sbx.value()
-
-    def update_min_hgt(self):
-        self.scatterT.min_height = self.min_height_sbx.value()
-
-    def update_max_hgt(self):
-        self.scatterT.max_height = self.max_height_sbx.value()
-
+    @QtCore.Slot()
     def update_sct_den_val(self):
         self.scatterT.def_density = self.scatter_density_sbx.value() / 100
 
+    @QtCore.Slot()
     def update_sct_obj_inst(self):
-        self.scatterT.sel_obj_inst()
-        self.obj_to_inst_le.setText(self.scatterT.inst_obj_name)
+        self.obj_to_inst_le.setText(self.scatterT.selected_obj_inst())
 
+    @QtCore.Slot()
     def update_inst_face_cbx(self):
         self.scatterT.is_face_normal = self.inst_face_cbx.isChecked()
 
+    @QtCore.Slot()
     def update_whole_sel_cbx(self):
         self.scatterT.is_whole_object = self.whole_sel_cbx.isChecked()
 
@@ -191,20 +132,34 @@ class ScatterUI(QtWidgets.QDialog):
     @QtCore.Slot()
     def scatter_object(self):
         """scatter object"""
-        self.scatterT.scatter_obj()
+        self.scatterT.scatter_obj(self.obj_to_inst_le.text())
 
     @QtCore.Slot()
     def scatter_rotate_object(self):
         """scatter object rotation"""
+        self.scatterT.min_rot_x = self.min_x_rot_sbx.value()
+        self.scatterT.min_rot_y = self.min_y_rot_sbx.value()
+        self.scatterT.min_rot_z = self.min_z_rot_sbx.value()
+        self.scatterT.max_rot_x = self.max_x_rot_sbx.value()
+        self.scatterT.max_rot_y = self.max_y_rot_sbx.value()
+        self.scatterT.max_rot_z = self.max_z_rot_sbx.value()
         self.scatterT.scatter_rotate_obj()
 
     @QtCore.Slot()
     def scatter_scale_object(self):
         """scatter object scale"""
+        self.scatterT.min_scl_x = self.min_x_scl_sbx.value()
+        self.scatterT.min_scl_y = self.min_y_scl_sbx.value()
+        self.scatterT.min_scl_z = self.min_z_scl_sbx.value()
+        self.scatterT.max_scl_x = self.max_x_scl_sbx.value()
+        self.scatterT.max_scl_y = self.max_y_scl_sbx.value()
+        self.scatterT.max_scl_z = self.max_z_scl_sbx.value()
         self.scatterT.scatter_scale_obj()
 
     @QtCore.Slot()
     def scatter_height_object(self):
+        self.scatterT.min_height = self.min_height_sbx.value()
+        self.scatterT.max_height = self.max_height_sbx.value()
         self.scatterT.scatter_height_obj()
 
     @QtCore.Slot()
@@ -616,8 +571,6 @@ class Scatter(object):
 
         self.def_density = 1.0
 
-        self.sel_lst = cmds.ls(selection=True, sn=True, fl=True)
-
         self.inst_obj_name = ""
 
         self.is_face_normal = False
@@ -668,37 +621,24 @@ class Scatter(object):
         self.cur_sub_hgt = self.cn_sub_hgt
         self.cur_sub_bas = self.cn_sub_bas
 
-    def sel_obj_inst(self):
-        """select object to instance"""
-        sel_lst = []
+    def selected_obj_inst(self):
+        return cmds.ls(sl=True, sn=True, fl=True)[0]
 
-        if len(sel_lst) > 0:
-            del sel_lst[:]
-
-        sel_lst = cmds.ls(selection=True, sn=True, fl=True)
-        self.sel_obj_inst = sel_lst[0]
-        self.inst_obj_name = str(sel_lst[0])
-
-    def scatter_obj(self):
+    def scatter_obj(self, obj_to_instance):
         """scatter an Object"""
         vert_list = cmds.ls(selection=True, fl=True)
         cmds.filterExpand(vert_list, selectionMask=31, expand=True)
         obj_vert_list = cmds.ls(vert_list[0] + ".vtx[*]", flatten=True)
-
-        if self.is_whole_object is False:
-            den_list = random.sample(vert_list,
-                                     int(round(float(len(vert_list)
-                                         * self.def_density))))
-        else:
-            den_list = random.sample(obj_vert_list,
-                                     int(round(float(len(obj_vert_list)
-                                                     * self.def_density))))
-        object_to_instance = self.sel_obj_inst
-        if cmds.objectType(object_to_instance) == 'transform':
-            if self.is_face_normal is False:
-                self.scatter_face_up(den_list, object_to_instance)
+        den_list = random.sample(vert_list, int(float(len(vert_list))*
+                                                self.def_density))
+        if self.is_whole_object:
+            den_list = random.sample(obj_vert_list, int(float(
+                len(obj_vert_list)*self.def_density)))
+        if cmds.objectType(obj_to_instance) == 'transform':
+            if not self.is_face_normal:
+                self.scatter_face_up(den_list, obj_to_instance)
             else:
-                self.scatter_face_normal(den_list, object_to_instance)
+                self.scatter_face_normal(den_list, obj_to_instance)
         self.rename_inst_obj_group()
 
     def rename_inst_obj_group(self):
@@ -740,7 +680,7 @@ class Scatter(object):
 
     def scatter_rotate_obj(self):
         """random rotation"""
-        obj_list = cmds.ls('obj_inst*', dag=1)
+        obj_list = cmds.ls(selection=True, dag=1)
         for obj in obj_list:
             rand_rot_x = random.uniform(self.min_rot_x,
                                         self.max_rot_x)
@@ -755,7 +695,7 @@ class Scatter(object):
 
     def scatter_scale_obj(self):
         """random scale"""
-        obj_list = cmds.ls('obj_inst*', fl=True, dag=1)
+        obj_list = cmds.ls(selection=True, fl=True, dag=1)
         for obj in obj_list:
             rand_scl_x = random.uniform(self.min_scl_x,
                                         self.max_scl_x)
@@ -770,7 +710,8 @@ class Scatter(object):
 
     def scatter_height_obj(self):
         """random height"""
-        obj_list = cmds.ls('obj_inst*', fl=True)
+        obj_list = cmds.ls(selection=True)
         for obj in obj_list:
             rand_height = random.uniform(self.min_height, self.max_height)
-            cmds.move(rand_height, obj, y=True)
+            cmds.xform(obj, translation=[0.0, rand_height, 0.0],
+                       objectSpace=True, relative=True)
