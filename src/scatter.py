@@ -14,7 +14,7 @@ def maya_main_window():
 
 
 class ScatterUI(QtWidgets.QDialog):
-    """Simple UI Class"""
+    """Scatter UI Class"""
 
     def __init__(self):
         """Constructor"""
@@ -158,6 +158,7 @@ class ScatterUI(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def scatter_height_object(self):
+        """scatter object height"""
         self.scatterT.min_height = self.min_height_sbx.value()
         self.scatterT.max_height = self.max_height_sbx.value()
         self.scatterT.scatter_height_obj()
@@ -315,7 +316,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.min_height_sbx = QtWidgets.QDoubleSpinBox()
         self.min_height_sbx.setDecimals(2)
         self.min_height_sbx.setSingleStep(.1)
-        self.min_height_sbx.setMinimum(-10)
+        self.min_height_sbx.setMinimum(-100)
         self.min_height_sbx.setMaximum(100)
         self.min_height_sbx.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.PlusMinus)
@@ -578,7 +579,6 @@ class Scatter(object):
         self.is_whole_object = False
 
     def cube(self):
-        """create polygon"""
         cmds.polyCube(name="Cube",
                       sw=self.cur_sub_ax,
                       sh=self.cur_sub_hgt,
@@ -622,6 +622,7 @@ class Scatter(object):
         self.cur_sub_bas = self.cn_sub_bas
 
     def selected_obj_inst(self):
+        """returns the current selected object"""
         return cmds.ls(sl=True, sn=True, fl=True)[0]
 
     def scatter_obj(self, obj_to_instance):
@@ -629,7 +630,7 @@ class Scatter(object):
         vert_list = cmds.ls(selection=True, fl=True)
         cmds.filterExpand(vert_list, selectionMask=31, expand=True)
         obj_vert_list = cmds.ls(vert_list[0] + ".vtx[*]", flatten=True)
-        den_list = random.sample(vert_list, int(float(len(vert_list))*
+        den_list = random.sample(vert_list, int(float(len(vert_list)) *
                                                 self.def_density))
         if self.is_whole_object:
             den_list = random.sample(obj_vert_list, int(float(
